@@ -1,0 +1,21 @@
+{
+  "name": "tetris",
+  "version": "1.0.0",
+  "description": "javascript game of tetris",
+  "main": "src/index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Anton267/tetris"
+  },
+  "homepage": "https://github.com/Anton267/tetris",
+  "keywords": [
+    "js",
+    "games",
+    "tetris"
+  ],
+  "author": "Anton",
+  "license": "ISC"
+}
