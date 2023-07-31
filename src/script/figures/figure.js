@@ -14,6 +14,10 @@ export class Figure {
         return this.getFigure();
     }
 
+    getNextRotateFigure() {
+        return this._figureOptions[this._idx + 1] || this._figureOptions[0];
+    }
+
     getFigure() {
         return this._figureOptions[this._idx];
     }
@@ -36,5 +40,23 @@ export class Figure {
 
     getFigureApplyStatus() {
         return this._isApplyed;
+    }
+
+    isFigureCanMove(figure, nextFigureXpos, figureYOffset, matrix) {
+        for (let i = 0; i < figure.length; i++) {
+            const arr = figure[i];
+            for (let j = 0; j < arr.length; j++) {
+                const yOffset = i + figureYOffset;
+                const xOffset = j + nextFigureXpos;
+                const matrixFigure = matrix[yOffset]?.[xOffset];
+                if (
+                    matrixFigure === void 0 ||
+                    arr[j] && matrixFigure instanceof Figure && matrixFigure.getFigureApplyStatus()
+                ) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

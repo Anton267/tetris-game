@@ -7,11 +7,12 @@ export class Draw {
         this._score = 0;
         this._level = 1;
         this._prevLevelChangeScore = 0;
+        this._isGameOver = false;
     }
 
-    print({ ctx, matrix, figure, figureYOffset, figureXOffset, strokeStyle = "grey", cb }) {
+    print({ ctx, matrix, figure, figureYOffset, figureXOffset }) {
         this._clearFn(ctx);
-        let isFinish = false;
+        let isApplyFigure = false;
         for (let i = 0; i < matrix.length; i++) {
             const arr = matrix[i];
             let prevX = 0;
@@ -24,42 +25,83 @@ export class Draw {
                     ctx.fillStyle = arr[j].getFigureColor();
                     ctx.fillRect(...params);
                 } else {
-                    ctx.strokeStyle = strokeStyle;
+                    ctx.strokeStyle = "grey";
                     ctx.strokeRect(...params);
                 }
                 const x = i - figureYOffset;
                 const y = j - figureXOffset;
+                const figureHeight = figure.getFigureHeight();
+                if (
+                    i === 0 &&
+                    this.isFigure(matrix[i + figureHeight]?.[j]) &&
+                    matrix[i + figureHeight][j].getFigureApplyStatus() &&
+                    figure.getFigure()?.[x]?.[y]
+                ) {
+                    isApplyFigure = true;
+                    this._isGameOver = true;
+                }
                 if (x <= i && figure.getFigure()?.[x]?.[y]) {
                     if (arr[j] === 0) {
                         ctx.fillStyle = figure.getFigureColor();
                         ctx.fillRect(...params);
                         arr[j] = figure;
                         if (this.isFigure(matrix[i + 1]?.[j]) && matrix[i + 1]?.[j].getFigureApplyStatus()) {
-                            isFinish = true;
+                            isApplyFigure = true;
                         }
                     }
                 }
                 prevX += this._size;
             }
         }
-        if (isFinish) {
-            cb();
-            return;
-        }
-        if (figureYOffset >= (matrix.length - figure.getFigure().length)) {
-            cb();
-        }
+        isApplyFigure = isApplyFigure || figureYOffset >= (matrix.length - figure.getFigure().length);
+        return {
+            isApplyFigure,
+        };
     };
 
-    applyFigure(matrix) {
-        for (const arr of matrix) {
-            for (let i = 0; i < arr.length; i++) {
-                if (this.isFigure(arr[i])) {
-                    arr[i].figureApply();
+    printBody({ ctx, matrix }) {
+        this._clearFn(ctx);
+        for (let i = 0; i < matrix.length; i++) {
+            const arr = matrix[i];
+            let prevX = 0;
+            for (let j = 0; j < arr.length; j++) {
+                const params = [prevX, i * this._size, this._size, this._size];
+                if (this.isFigure(arr[j]) && arr[j].getFigureApplyStatus() === false) {
+                    arr[j] = 0;
                 }
+                if (this.isFigure(arr[j])) {
+                    ctx.fillStyle = arr[j].getFigureColor();
+                    ctx.fillRect(...params);
+                } else {
+                    ctx.strokeStyle = "grey";
+                    ctx.strokeRect(...params);
+                }
+                prevX += this._size;
             }
         }
     };
+
+    printNextFigure({ ctx, matrix, figure }) {
+        this._clearFn(ctx);
+        for (let i = 0; i < matrix.length; i++) {
+            const arr = matrix[i];
+            let prevX = 0;
+            for (let j = 0; j < arr.length; j++) {
+                const params = [prevX, i * this._size, this._size, this._size];
+                if (!this.isFigure(arr[j])) {
+                    ctx.strokeStyle = "#ececec";
+                    ctx.strokeRect(...params);
+                }
+                if (figure.getFigure()[i][j]) {
+                    ctx.fillStyle = figure.getFigureColor();
+                    ctx.fillRect(...params);
+                    arr[j] = figure;
+                }
+                prevX += this._size;
+            }
+        }
+    };
+
 
     getNewBody(matrix) {
         let deleted = new Set();
@@ -112,8 +154,8 @@ export class Draw {
         ctx.fillText(`Level ${level}`, 90, 150);
     }
 
-    isGameOver(matrix) {
-        return matrix[0].some((item => this.isFigure(item)));
+    isGameOver() {
+        return this._isGameOver;
     }
 
     isFigure(item) {

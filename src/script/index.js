@@ -13,7 +13,8 @@ const clear = (ctx) => {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 };
 let draw = new Draw(SIZE, clear);
-
+/** initial settings */
+const LEVEL_COUNT = 11;
 const getStartXPos = (matrix) => Math.floor((matrix[0].length - 1) / 2);
 let figureYpos = -1;
 let figureXpos = getStartXPos(body);
@@ -23,56 +24,64 @@ let figureCount = 0;
 let speed = 600;
 let disableActions = false;
 
-/** start stop */
-let int;
-const startFn = () => {
-    int = setInterval(() => {
-        draw.print({
-            ctx: context,
-            matrix: body,
-            figure: figure,
-            figureYOffset: ++figureYpos,
-            figureXOffset: figureXpos,
-            cb: endCb,
-        });
-    }, speed);
-}
-const stopFn = () => {
-    clearInterval(int);
-}
-const started = new StartStop(startFn, stopFn);
-started.start();
 /** nextFigureCanvas */
 const nextFigureCanvas = document.getElementById("nextFigureCanvas");
 const nextFigureCanvasCtx = nextFigureCanvas.getContext("2d");
-const drawNextFigure = () => {
+const printNextFigure = () => {
     const nextFigure = figures[figureCount + 1] || figures[0];
     const nextFigureMatrix = draw.generateBody(nextFigure.getFigure().length, nextFigure.getFigure()[0].length);
     nextFigureCanvas.width = nextFigureMatrix[0].length * SIZE;
     nextFigureCanvas.height = nextFigureMatrix.length * SIZE;
-    draw.print({
+    draw.printNextFigure({
         ctx: nextFigureCanvasCtx,
         matrix: nextFigureMatrix,
         figure: nextFigure,
-        figureYOffset: 0,
-        figureXOffset: 0,
-        strokeStyle: "#ececec",
-        cb: () => { },
     });
-}
-drawNextFigure();
+};
+printNextFigure();
+
+/** start stop */
+let interval;
+let isApplyFigure = false;
 const scoreDiv = document.getElementById("scoreDiv");
 const levelDiv = document.getElementById("levelDiv");
-/** endCb */
-const endCb = () => {
-    figureYpos = -1;
-    figureXpos = getStartXPos(body);
-    figureCount++;
-    if (figureCount > figures.length - 1) {
-        figureCount = 0;
-        figures = figuresFactory();
+const applyFigure = () => {
+    if (isApplyFigure) {
+        figure.figureApply();
+        figureYpos = -1;
+        figureXpos = getStartXPos(body);
+        figureCount++;
+        if (figureCount > figures.length - 1) {
+            figureCount = 0;
+            figures = figuresFactory();
+        }
+        figure = figures[figureCount];
+        body = draw.getNewBody(body);
+        scoreDiv.innerText = draw.getScore();
+        printNextFigure();
     }
-    if (draw.isGameOver(body)) {
+    if (draw.isNextLevel(LEVEL_COUNT)) {
+        started.stop();
+        draw.printBody(
+            {
+                ctx: context,
+                matrix: body,
+            }
+        );
+        speed = speed - 30;
+        draw.nextLevel();
+        levelDiv.innerText = draw.getLevel();
+        draw.printNextLevel(context, draw.getLevel());
+        disableActions = true;
+        setTimeout(() => {
+            started.start();
+            disableActions = false;
+        }, 1300);
+    }
+};
+
+const start = () => {
+    if (draw.isGameOver()) {
         draw.printEndGame(context);
         started.stop();
         body = getBody();
@@ -82,57 +91,61 @@ const endCb = () => {
         scoreDiv.innerText = draw.getScore();
         return;
     }
-    figure = figures[figureCount];
-    draw.applyFigure(body);
-    body = draw.getNewBody(body);
-    scoreDiv.innerText = draw.getScore();
-    drawNextFigure();
-    if (draw.isNextLevel(11)) {
-        draw.print({
+    if (draw.isNextLevel(LEVEL_COUNT)) {
+        return;
+    }
+    applyFigure();
+    isApplyFigure = draw.print(
+        {
             ctx: context,
             matrix: body,
             figure: figure,
-            figureYOffset: figureYpos,
+            figureYOffset: ++figureYpos,
             figureXOffset: figureXpos,
-            cb: () => { },
-        });
-        speed = speed - 30;
-        draw.nextLevel();
-        levelDiv.innerText = draw.getLevel();
-        draw.printNextLevel(context, draw.getLevel());
-        started.stop();
-        disableActions = true;
-        setTimeout(() => {
-            started.start();
-            disableActions = false;
-        }, 1300);
-    }
+        }
+    )
+        .isApplyFigure;
+};
+start();
+const startFn = () => {
+    interval = setInterval(start, 1000);
 }
+const stopFn = () => {
+    clearInterval(interval);
+}
+const started = new StartStop(startFn, stopFn);
+started.start();
 
 /** keyboardActions */
 const keyboardActions = {
     Enter: () => {
-        figure.rotateFigure();
-        if (body[0].length < figureXpos + figure.getFigureWidth()) {
-            figureXpos -= figureXpos + figure.getFigureWidth() - body[0].length;
+        const nextFigure = figure.getNextRotateFigure();
+        if (
+            figure.isFigureCanMove(nextFigure, figureXpos, figureYpos, body)
+        ) {
+            figure.rotateFigure();
         }
     },
     ArrowRight: () => {
         if (
-            body[figureYpos + figure.getFigureHeight()]?.[figureXpos + figure.getFigureWidth()] === 0
+            figure.isFigureCanMove(figure.getFigure(), figureXpos + 1, figureYpos, body)
         ) {
             figureXpos++;
         }
     },
     ArrowLeft: () => {
         if (
-            body[figureYpos + figure.getFigureHeight()]?.[figureXpos - 1] === 0
+            figure.isFigureCanMove(figure.getFigure(), figureXpos - 1, figureYpos, body)
         ) {
             figureXpos--;
         }
     },
     ArrowDown: () => {
-        figureYpos++;
+        if (
+            figure.isFigureCanMove(figure.getFigure(), figureXpos, figureYpos + 1, body)
+        ) {
+            figureYpos++;
+        }
     },
     Space: () => {
         if (started.getIsPaused()) {
@@ -156,14 +169,19 @@ document.addEventListener("keydown", (e) => {
             keyboardActions.Space();
         }
         keyboardActions[code]();
-        draw.print({
-            ctx: context,
-            matrix: body,
-            figure: figure,
-            figureYOffset: figureYpos,
-            figureXOffset: figureXpos,
-            cb: endCb,
-        });
+        isApplyFigure = draw.print(
+            {
+                ctx: context,
+                matrix: body,
+                figure: figure,
+                figureYOffset: figureYpos,
+                figureXOffset: figureXpos,
+            }
+        )
+            .isApplyFigure;
+        if (code === "ArrowDown") {
+            applyFigure();
+        }
     }
 });
 
