@@ -113,6 +113,9 @@ const endCb = () => {
 const keyboardActions = {
     Enter: () => {
         figure.rotateFigure();
+        if (body[0].length < figureXpos + figure.getFigureWidth()) {
+            figureXpos -= figureXpos + figure.getFigureWidth() - body[0].length;
+        }
     },
     ArrowRight: () => {
         if (
