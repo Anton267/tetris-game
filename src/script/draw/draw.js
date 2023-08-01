@@ -18,7 +18,7 @@ export class Draw {
             let prevX = 0;
             for (let j = 0; j < arr.length; j++) {
                 const params = [prevX, i * this._size, this._size, this._size];
-                if (this.isFigure(arr[j]) && arr[j].getFigureApplyStatus() === false) {
+                if (this.isFigure(arr[j]) && arr[j].getFigureIsApply() === false) {
                     arr[j] = 0;
                 }
                 if (this.isFigure(arr[j])) {
@@ -34,7 +34,7 @@ export class Draw {
                 if (
                     i === 0 &&
                     this.isFigure(matrix[i + figureHeight]?.[j]) &&
-                    matrix[i + figureHeight][j].getFigureApplyStatus() &&
+                    matrix[i + figureHeight][j].getFigureIsApply() &&
                     figure.getFigure()?.[x]?.[y]
                 ) {
                     isApplyFigure = true;
@@ -45,7 +45,7 @@ export class Draw {
                         ctx.fillStyle = figure.getFigureColor();
                         ctx.fillRect(...params);
                         arr[j] = figure;
-                        if (this.isFigure(matrix[i + 1]?.[j]) && matrix[i + 1]?.[j].getFigureApplyStatus()) {
+                        if (this.isFigure(matrix[i + 1]?.[j]) && matrix[i + 1]?.[j].getFigureIsApply()) {
                             isApplyFigure = true;
                         }
                     }
@@ -66,7 +66,7 @@ export class Draw {
             let prevX = 0;
             for (let j = 0; j < arr.length; j++) {
                 const params = [prevX, i * this._size, this._size, this._size];
-                if (this.isFigure(arr[j]) && arr[j].getFigureApplyStatus() === false) {
+                if (this.isFigure(arr[j]) && arr[j].getFigureIsApply() === false) {
                     arr[j] = 0;
                 }
                 if (this.isFigure(arr[j])) {
@@ -107,7 +107,7 @@ export class Draw {
         let deleted = new Set();
         for (let i = 0; i < matrix.length; i++) {
             const arr = matrix[i];
-            if (arr.every((item) => this.isFigure(item) && item.getFigureApplyStatus())) {
+            if (arr.every((item) => this.isFigure(item) && item.getFigureIsApply())) {
                 deleted.add(i);
             }
         }

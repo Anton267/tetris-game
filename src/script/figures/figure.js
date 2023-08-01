@@ -3,7 +3,7 @@ export class Figure {
         this._figureOptions = figureOptions;
         this._color = color;
         this._idx = 0;
-        this._isApplyed = false;
+        this._isApplied = false;
     }
 
     rotateFigure() {
@@ -35,11 +35,11 @@ export class Figure {
     }
 
     figureApply() {
-        this._isApplyed = true;
+        this._isApplied = true;
     }
 
-    getFigureApplyStatus() {
-        return this._isApplyed;
+    getFigureIsApply() {
+        return this._isApplied;
     }
 
     isFigureCanMove(figure, nextFigureXpos, figureYOffset, matrix) {
@@ -51,7 +51,7 @@ export class Figure {
                 const matrixFigure = matrix[yOffset]?.[xOffset];
                 if (
                     matrixFigure === void 0 ||
-                    arr[j] && matrixFigure instanceof Figure && matrixFigure.getFigureApplyStatus()
+                    arr[j] && matrixFigure instanceof Figure && matrixFigure.getFigureIsApply()
                 ) {
                     return false;
                 }

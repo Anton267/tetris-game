@@ -124,6 +124,14 @@ const keyboardActions = {
             figure.isFigureCanMove(nextFigure, figureXpos, figureYpos, body)
         ) {
             figure.rotateFigure();
+            return;
+        }
+        const xOffset = body[0].length - nextFigure[0].length;
+        if (
+            figure.isFigureCanMove(nextFigure, xOffset, figureYpos, body)
+        ) {
+            figure.rotateFigure();
+            figureXpos = body[0].length - figure.getFigureWidth();
         }
     },
     ArrowRight: () => {
@@ -141,11 +149,7 @@ const keyboardActions = {
         }
     },
     ArrowDown: () => {
-        if (
-            figure.isFigureCanMove(figure.getFigure(), figureXpos, figureYpos + 1, body)
-        ) {
-            figureYpos++;
-        }
+        figureYpos++;
     },
     Space: () => {
         if (started.getIsPaused()) {
@@ -184,7 +188,3 @@ document.addEventListener("keydown", (e) => {
         }
     }
 });
-
-// function print(matrix) {
-//     console.log(matrix.reduce((acc, arr) => (acc += arr.join("") + "\n"), ""));
-// }
