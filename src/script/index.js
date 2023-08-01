@@ -149,7 +149,11 @@ const keyboardActions = {
         }
     },
     ArrowDown: () => {
-        figureYpos++;
+        if (
+            figure.isFigureCanMove(figure.getFigure(), figureXpos, figureYpos + 1, body)
+        ) {
+            figureYpos++;
+        }
     },
     Space: () => {
         if (started.getIsPaused()) {
