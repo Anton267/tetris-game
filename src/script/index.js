@@ -15,13 +15,14 @@ const clear = (ctx) => {
 let draw = new Draw(SIZE, clear);
 /** initial settings */
 const LEVEL_COUNT = 11;
+const INITIAL_SPEED = 600;
 const getStartXPos = (matrix) => Math.floor((matrix[0].length - 1) / 2);
 let figureYpos = -1;
 let figureXpos = getStartXPos(body);
 let figures = figuresFactory();
 let figure = figures[0];
 let figureCount = 0;
-let speed = 600;
+let speed = INITIAL_SPEED;
 let disableActions = false;
 
 /** nextFigureCanvas */
@@ -29,9 +30,9 @@ const nextFigureCanvas = document.getElementById("nextFigureCanvas");
 const nextFigureCanvasCtx = nextFigureCanvas.getContext("2d");
 const printNextFigure = () => {
     const nextFigure = figures[figureCount + 1] || figures[0];
-    const nextFigureMatrix = draw.generateBody(nextFigure.getFigure().length, nextFigure.getFigure()[0].length);
-    nextFigureCanvas.width = nextFigureMatrix[0].length * SIZE;
-    nextFigureCanvas.height = nextFigureMatrix.length * SIZE;
+    const nextFigureMatrix = draw.generateBody(nextFigure.getFigureHeight(), nextFigure.getFigureWidth());
+    nextFigureCanvas.width = nextFigure.getFigureWidth() * SIZE;
+    nextFigureCanvas.height = nextFigure.getFigureHeight() * SIZE;
     draw.printNextFigure({
         ctx: nextFigureCanvasCtx,
         matrix: nextFigureMatrix,
@@ -45,8 +46,9 @@ let interval;
 let isApplyFigure = false;
 const scoreDiv = document.getElementById("scoreDiv");
 const levelDiv = document.getElementById("levelDiv");
-const applyFigure = () => {
+const applyFigure = (cb) => {
     if (isApplyFigure) {
+        isApplyFigure = false;
         figure.figureApply();
         figureYpos = -1;
         figureXpos = getStartXPos(body);
@@ -58,18 +60,10 @@ const applyFigure = () => {
         figure = figures[figureCount];
         body = draw.getNewBody(body);
         scoreDiv.innerText = draw.getScore();
-        printNextFigure();
     }
     if (draw.isNextLevel(LEVEL_COUNT)) {
         started.stop();
-        draw.printBody(
-            {
-                ctx: context,
-                matrix: body,
-            }
-        );
-        speed = speed - 30;
-        draw.nextLevel();
+        speed -= 30;
         levelDiv.innerText = draw.getLevel();
         draw.printNextLevel(context, draw.getLevel());
         disableActions = true;
@@ -77,7 +71,12 @@ const applyFigure = () => {
             started.start();
             disableActions = false;
         }, 1300);
+        return;
     }
+    if (cb) {
+        cb();
+    }
+    printNextFigure();
 };
 
 const start = () => {
@@ -86,29 +85,29 @@ const start = () => {
         started.stop();
         body = getBody();
         draw = new Draw(SIZE, clear);
-        speed = 400;
+        speed = INITIAL_SPEED;
         levelDiv.innerText = draw.getLevel();
         scoreDiv.innerText = draw.getScore();
         return;
     }
-    if (draw.isNextLevel(LEVEL_COUNT)) {
-        return;
-    }
-    applyFigure();
-    isApplyFigure = draw.print(
-        {
-            ctx: context,
-            matrix: body,
-            figure: figure,
-            figureYOffset: ++figureYpos,
-            figureXOffset: figureXpos,
-        }
-    )
-        .isApplyFigure;
+    const applyCb = () => {
+        isApplyFigure = draw.print(
+            {
+                ctx: context,
+                matrix: body,
+                figure: figure,
+                figureYOffset: ++figureYpos,
+                figureXOffset: figureXpos,
+            }
+        )
+            .isApplyFigure;
+    };
+    applyFigure(applyCb);
+
 };
 start();
 const startFn = () => {
-    interval = setInterval(start, 1000);
+    interval = setInterval(start, speed);
 }
 const stopFn = () => {
     clearInterval(interval);
@@ -118,7 +117,7 @@ started.start();
 
 /** keyboardActions */
 const keyboardActions = {
-    Enter: () => {
+    ArrowUp: () => {
         const nextFigure = figure.getNextRotateFigure();
         if (
             figure.isFigureCanMove(nextFigure, figureXpos, figureYpos, body)

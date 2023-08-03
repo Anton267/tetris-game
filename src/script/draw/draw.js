@@ -59,28 +59,6 @@ export class Draw {
         };
     };
 
-    printBody({ ctx, matrix }) {
-        this._clearFn(ctx);
-        for (let i = 0; i < matrix.length; i++) {
-            const arr = matrix[i];
-            let prevX = 0;
-            for (let j = 0; j < arr.length; j++) {
-                const params = [prevX, i * this._size, this._size, this._size];
-                if (this.isFigure(arr[j]) && arr[j].getFigureIsApply() === false) {
-                    arr[j] = 0;
-                }
-                if (this.isFigure(arr[j])) {
-                    ctx.fillStyle = arr[j].getFigureColor();
-                    ctx.fillRect(...params);
-                } else {
-                    ctx.strokeStyle = "grey";
-                    ctx.strokeRect(...params);
-                }
-                prevX += this._size;
-            }
-        }
-    };
-
     printNextFigure({ ctx, matrix, figure }) {
         this._clearFn(ctx);
         for (let i = 0; i < matrix.length; i++) {
@@ -129,14 +107,11 @@ export class Draw {
         return this._level;
     }
 
-    nextLevel() {
-        this._level++;
-    }
-
     isNextLevel(count) {
         const isNext = this.getScore() % count === 0 && this._prevLevelChangeScore !== this.getScore();
         if (isNext) {
             this._prevLevelChangeScore = this.getScore();
+            this._level++;
         }
         return isNext;
     }
@@ -151,6 +126,7 @@ export class Draw {
 
     printNextLevel(ctx, level) {
         ctx.font = "48px serif";
+        ctx.fillStyle = "black";
         ctx.fillText(`Level ${level}`, 90, 150);
     }
 
