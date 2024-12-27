@@ -1,3 +1,3 @@
 Game "Tetris"
 
-https://anton267.github.io/tetris/
+https://anton267.github.io/tetris-game/
